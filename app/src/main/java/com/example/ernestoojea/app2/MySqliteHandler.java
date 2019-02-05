@@ -19,7 +19,7 @@ import java.util.ArrayList;
 public class MySqliteHandler extends SQLiteOpenHelper{
     private static String DB_NAME = "app.db";
     private static String DB_PATH = "";
-    private static final int DB_VERSION = 2;
+    private static final int DB_VERSION = 3;
 
     private SQLiteDatabase mDataBase;
     private final Context mContext;
@@ -207,10 +207,44 @@ public class MySqliteHandler extends SQLiteOpenHelper{
         db.close();
         return list;
     }
+    public void addTower(Tower tower){
+        SQLiteDatabase database = MySqliteHandler.this.getWritableDatabase();
+        ContentValues values = new ContentValues();
 
+        values.put("date",tower.getDate());
+        values.put("cid",tower.getCid());
+        values.put("lac",tower.getLac());
+        database.insert("tower",null,values);
+        database.close();
+        Log.i("msg","add tower");
 
-
-
+    }
+    public ArrayList<Tower> getAllElementsTower() {
+        ArrayList<Tower> list = new ArrayList<Tower>();
+        String selectQuery = "SELECT  * FROM tower";
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+        while(cursor.moveToNext()){
+            Tower x = new Tower(Integer.parseInt(cursor.getString(0)),cursor.getString(1),Integer.parseInt(cursor.getString(2)),Integer.parseInt(cursor.getString(3)));
+            list.add(x);
+        }
+        cursor.close();
+        db.close();
+        return list;
+    }
+    public ArrayList<Tower>getAllUniqueTower(){
+        ArrayList<Tower> list = new ArrayList<Tower>();
+        String selectQuery = "SELECT * FROM tower GROUP BY cid";
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+        while(cursor.moveToNext()){
+            Tower x = new Tower(Integer.parseInt(cursor.getString(0)),cursor.getString(1),Integer.parseInt(cursor.getString(2)),Integer.parseInt(cursor.getString(3)));
+            list.add(x);
+        }
+        cursor.close();
+        db.close();
+        return list;
+    }
 
 
 }

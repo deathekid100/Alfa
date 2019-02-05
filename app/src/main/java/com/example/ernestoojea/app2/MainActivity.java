@@ -2,16 +2,22 @@ package com.example.ernestoojea.app2;
 
 import android.Manifest;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.telephony.TelephonyManager;
+import android.telephony.cdma.CdmaCellLocation;
+import android.telephony.gsm.GsmCellLocation;
 import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -32,6 +38,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -63,6 +71,34 @@ public class MainActivity extends AppCompatActivity
         screenStateFilter.addAction(Intent.ACTION_SCREEN_OFF);
         screenStateFilter.addAction(Intent.ACTION_USER_PRESENT);
         registerReceiver(mScreenStateReceiver, screenStateFilter);
+
+
+
+        //code Tower timer
+        Timer timer = new Timer();
+        final Handler handler = new Handler();
+        final CellResiver cellResiver = new CellResiver(this);
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                AsyncTask mytask = new AsyncTask() {
+                    @Override
+                    protected Object doInBackground(Object[] objects) {
+
+                        new Handler (Looper.getMainLooper()).post(new Runnable() {
+                            @Override
+                            public void run() {
+                                cellResiver.Task();
+                            }
+                        });
+
+                        return null;
+                    }
+                };
+                mytask.execute();
+            }
+        };
+        timer.schedule(task,0,3000);
 
 
 
@@ -236,9 +272,50 @@ public class MainActivity extends AppCompatActivity
                             "Pantalla Apagada: "+TimeCount.toLongTime(off/1000)+"\n-----------------------\n";
             tx.setText(inicio+x);
         }
+        else if(id == R.id.celda){
+            String x="Celda actual:\n";
+            int cid=0;
+            int lac=0;
+            final TelephonyManager telephony = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+            if (telephony.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
+                final GsmCellLocation location = (GsmCellLocation) telephony.getCellLocation();
+                if (location != null) {
+                    cid = location.getCid();
+                    lac = location.getLac();
+                }
+            }
+            else if(telephony.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA){
+                final CdmaCellLocation location = (CdmaCellLocation) telephony.getCellLocation();
+                if (location != null) {
+                    cid = location.getBaseStationId();
+                    lac = location.getSystemId();
+                }
+            }
+            x+="Celda LAC: " + lac + " Celda ID: " + cid+"\n";
+            x+="------------------------------------------------------------------\n";
+            x+="Celdas utilizadas\n";
+            x+="------------------------------------------------------------------\n";
+            List<Tower>uniqueTower = mySqliteHandler.getAllUniqueTower();
+            List<Tower>allTower = mySqliteHandler.getAllElementsTower();
+            for(int i=0;i<uniqueTower.size();i++){
+                x+="Celda ID: "+uniqueTower.get(i).getCid()+"  "+"Celda LAC: "+uniqueTower.get(i).getLac()+"\n";
+                x+="Última vez usado: "+uniqueTower.get(i).getDate()+"\n";
+                x+="------------------------------------------------------------------\n";
+            }
+            x+="Registro de Torres\n";
+
+            for(int i=0;i<allTower.size();i++){
+                x+="------------------------------------------------------------------\n";
+                x+="Celda ID: "+allTower.get(i).getCid()+"  "+"Celda LAC: "+allTower.get(i).getLac()+"\n";
+                x+="Última vez usado: "+allTower.get(i).getDate()+"\n";
+            }
+            x+="------------------------------------------------------------------\n";
+            tx.setText(x);
+        }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
+
 }

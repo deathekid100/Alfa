@@ -11,6 +11,9 @@
         <item
             android:id="@+id/pantalla"
             android:title="Pantalla" />
+        <item
+            android:id="@+id/celda"
+            android:title="Celda Actual" />
         <!--<item
             android:id="@+id/nav_gallery"
             android:icon="@drawable/ic_menu_gallery"

@@ -1,10 +1,8 @@
 package com.example.ernestoojea.app2;
-
-import android.content.Context;
-import android.widget.Toast;
-
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import android.content.Context;
+import android.widget.Toast;
 
 public class CallReceiver extends PhonecallReceiver {
 
